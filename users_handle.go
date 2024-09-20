@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/four88/blog-agg-go/internal/auth"
 	"github.com/four88/blog-agg-go/internal/database"
 	"github.com/google/uuid"
 )
@@ -36,19 +35,8 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 	responseWithJSON(w, databaseUserToUser(user), http.StatusOK)
 }
 
-func (cfg *apiConfig) handlerUsersGetInfo(w http.ResponseWriter, r *http.Request) {
-	apiKey, err := auth.GetAPIKey(r.Header)
-	if err != nil {
-		responseWithErr(w, "Couldn't find api key", http.StatusUnauthorized)
-		return
-	}
+func (cfg *apiConfig) handlerUsersGetInfo(w http.ResponseWriter, r *http.Request, user database.User) {
 
-	user, err := cfg.DB.GetUser(r.Context(), apiKey)
-	if err != nil {
-		responseWithErr(w, "Couldn't get user", http.StatusInternalServerError)
-		return
-	}
 	response := databaseUserToUser(user)
-
 	responseWithJSON(w, response, http.StatusOK)
 }

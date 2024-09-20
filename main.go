@@ -31,6 +31,9 @@ func main() {
 	}
 
 	db, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatalf("Error opening database: %v", err)
+	}
 
 	dbQueries := database.New(db)
 
@@ -45,11 +48,20 @@ func main() {
 	mux := http.NewServeMux()
 
 	// API endpoints
+	// user route
 	mux.HandleFunc("POST /v1/users", apiCfg.handlerUsersCreate)
-	mux.HandleFunc("GET /v1/users", apiCfg.handlerUsersGetInfo)
+	mux.HandleFunc("GET /v1/users", apiCfg.middlewareAuth(apiCfg.handlerUsersGetInfo))
 	mux.HandleFunc("GET /v1/healthz", readinessHandler)
 	mux.HandleFunc("GET /v1/err", errorHandle)
 
+	// feed route
+	mux.HandleFunc("POST /v1/feeds", apiCfg.middlewareAuth(apiCfg.handleFeedCreate))
+	mux.HandleFunc("GET /v1/feeds", apiCfg.handleGetAllFeeds)
+
+	// feed follow route
+	mux.HandleFunc("POST /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handleFeedFollowCreate))
+	mux.HandleFunc("GET /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handleGetFeedFollows))
+	mux.HandleFunc("DELETE /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handleFeedFollowDelete))
 	// Start the server
 	server := &http.Server{
 		Addr:    ":" + port,
